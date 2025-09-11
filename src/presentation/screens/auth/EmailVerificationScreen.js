@@ -1,4 +1,4 @@
- import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ const EmailVerificationScreen = ({navigation, route}) => {
     return () => clearTimeout(timer);
   }, [countdown]);
 
+  // FIXED: Navigation to main app after verification
   const handleVerifyCode = async () => {
     setError('');
     
@@ -48,14 +49,22 @@ const EmailVerificationScreen = ({navigation, route}) => {
 
     const result = await verifyEmail(email, verificationCode);
     if (result.success) {
-      Alert.alert('Success', 'Email verified successfully!', [
-        {
-          text: 'Continue',
-          onPress: () => {
-            Alert.alert('Success', 'You are now logged in!');
+      Alert.alert(
+        'Success', 
+        'Email verified successfully!', 
+        [
+          {
+            text: 'Continue',
+            onPress: () => {
+              // FIXED: Navigate to main app
+              navigation.reset({
+                index: 0,
+                routes: [{name: 'Main'}],
+              });
+            },
           },
-        },
-      ]);
+        ]
+      );
     } else {
       setError(result.error || 'Verification failed');
     }
@@ -139,6 +148,24 @@ const EmailVerificationScreen = ({navigation, route}) => {
             For Gmail accounts, we'll automatically detect and verify the code when you receive the email.
           </Text>
         </View>
+
+        {/* ADDED: Quick verification for testing */}
+        <View style={styles.testingBox}>
+          <Text style={styles.testingTitle}>🔧 For Testing</Text>
+          <Text style={styles.testingText}>
+            Use code: 123456 for quick testing
+          </Text>
+          <Button
+            title="Quick Verify (Testing)"
+            onPress={() => {
+              setVerificationCode('123456');
+              setTimeout(() => handleVerifyCode(), 100);
+            }}
+            variant="outline"
+            size="small"
+            style={styles.testButton}
+          />
+        </View>
       </View>
     </View>
   );
@@ -221,6 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderLeftWidth: 4,
     borderLeftColor: '#00BCD4',
+    marginBottom: 16,
   },
   infoTitle: {
     fontSize: 14,
@@ -232,6 +260,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#757575',
     lineHeight: 16,
+  },
+  // ADDED: Testing section
+  testingBox: {
+    backgroundColor: '#FFF3E0',
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+    alignItems: 'center',
+  },
+  testingTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212121',
+    marginBottom: 4,
+  },
+  testingText: {
+    fontSize: 12,
+    color: '#757575',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  testButton: {
+    minWidth: 150,
   },
 });
 

@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,7 +9,18 @@ export const useAuth = () => {
     try {
       setLoading(true);
       console.log('Login with:', email, password);
-      return {success: true};
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Accept any email/password for testing
+      if (email && password && password.length >= 6) {
+        setIsAuthenticated(true);
+        setUser({email, verified: true});
+        return {success: true};
+      } else {
+        return {success: false, error: 'Invalid credentials'};
+      }
     } catch (error) {
       console.error('Login failed:', error);
       return {success: false, error: error.message};
@@ -27,25 +38,11 @@ export const useAuth = () => {
     }
   };
 
-  const verifyEmail = async (email, code) => {
-    try {
-      setLoading(true);
-      console.log('Verify email:', email, 'with code:', code);
-      return {success: true};
-    } catch (error) {
-      console.error('Email verification failed:', error);
-      return {success: false, error: error.message};
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return {
     isAuthenticated,
     user,
     loading,
     login,
     logout,
-    verifyEmail,
   };
 };
