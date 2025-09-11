@@ -7,22 +7,22 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const {width, height} = Dimensions.get('window');
 
 const OnboardingScreen = ({navigation}) => {
   const navigateToLogin = () => {
+    console.log('Navigating to Login...');
     navigation.navigate('Login');
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#2196F3" />
       
-      {/* Background */}
       <View style={styles.backgroundGradient} />
       
-      {/* Main Content */}
       <View style={styles.mainContent}>
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
@@ -44,15 +44,16 @@ const OnboardingScreen = ({navigation}) => {
         </View>
       </View>
 
-      {/* Swipe Indicator */}
-      <View style={styles.swipeContainer}>
+      <TouchableOpacity 
+        style={styles.swipeContainer}
+        onPress={navigateToLogin}
+        activeOpacity={0.7}>
         <View style={styles.swipeIndicator}>
           <Text style={styles.swipeText}>Tap to continue</Text>
           <Text style={styles.arrowText}>→</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
-      {/* Get Started Button */}
       <TouchableOpacity 
         style={styles.getStartedButton} 
         onPress={navigateToLogin}
@@ -60,14 +61,13 @@ const OnboardingScreen = ({navigation}) => {
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
 
-      {/* Skip Button */}
       <TouchableOpacity 
         style={styles.skipButton} 
         onPress={navigateToLogin}
         activeOpacity={0.7}>
         <Text style={styles.skipText}>Skip →</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+    paddingTop: 20,
   },
   logoContainer: {
     marginBottom: 48,
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     position: 'absolute',
-    top: 50,
+    top: 20,
     right: 20,
     padding: 10,
   },

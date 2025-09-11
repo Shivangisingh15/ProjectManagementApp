@@ -9,6 +9,7 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Card from '../../components/common/Card';
@@ -50,10 +51,8 @@ const LoginScreen = ({navigation}) => {
 
     if (!isValid) return;
 
-    // FIXED: Proper navigation to main app
     const result = await login(email, password);
     if (result.success) {
-      // Navigate to main app using the correct route structure
       navigation.getParent()?.reset({
         index: 0,
         routes: [{name: 'Main'}],
@@ -88,10 +87,10 @@ const LoginScreen = ({navigation}) => {
   };
 
   return (
-    <>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.header}>
@@ -143,7 +142,6 @@ const LoginScreen = ({navigation}) => {
               style={styles.googleButton}
             />
 
-            {/* Quick Login for Testing */}
             <Button
               title="Quick Login (Demo)"
               onPress={handleQuickLogin}
@@ -162,7 +160,7 @@ const LoginScreen = ({navigation}) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </>
+    </SafeAreaView>
   );
 };
 
@@ -170,6 +168,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
