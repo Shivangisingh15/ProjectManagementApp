@@ -1,12 +1,25 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {createStackNavigator} from '@react-navigation/stack';
+import {Text} from 'react-native';
 import DashboardScreen from '../../presentation/screens/dashboard/DashboardScreen';
 import KanbanScreen from '../../presentation/screens/kanban/KanbanScreen';
 import ClockifyScreen from '../../presentation/screens/clockify/ClockifyScreen';
+import AddTaskScreen from '../../presentation/screens/clockify/AddTaskScreen';
 import WorkspaceScreen from '../../presentation/screens/workspace/WorkspaceScreen';
 
 const Tab = createBottomTabNavigator();
+const ClockifyStack = createStackNavigator();
+
+// Create a stack navigator for Clockify to include AddTaskScreen
+const ClockifyStackNavigator = () => {
+  return (
+    <ClockifyStack.Navigator screenOptions={{headerShown: false}}>
+      <ClockifyStack.Screen name="ClockifyMain" component={ClockifyScreen} />
+      <ClockifyStack.Screen name="AddTaskScreen" component={AddTaskScreen} />
+    </ClockifyStack.Navigator>
+  );
+};
 
 const MainTabNavigator = () => {
   return (
@@ -17,22 +30,22 @@ const MainTabNavigator = () => {
           
           switch (route.name) {
             case 'Dashboard':
-              iconName = 'dashboard';
+              iconName = '📊';
               break;
             case 'Kanban':
-              iconName = 'view-column';
+              iconName = '📋';
               break;
             case 'Clockify':
-              iconName = 'access-time';
+              iconName = '⏰';
               break;
             case 'Workspace':
-              iconName = 'work';
+              iconName = '👥';
               break;
             default:
-              iconName = 'help';
+              iconName = '❓';
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Text style={{fontSize: size, color: focused ? '#2196F3' : '#9E9E9E'}}>{iconName}</Text>;
         },
         tabBarActiveTintColor: '#2196F3',
         tabBarInactiveTintColor: '#9E9E9E',
@@ -48,7 +61,7 @@ const MainTabNavigator = () => {
       })}>
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Kanban" component={KanbanScreen} />
-      <Tab.Screen name="Clockify" component={ClockifyScreen} />
+      <Tab.Screen name="Clockify" component={ClockifyStackNavigator} />
       <Tab.Screen name="Workspace" component={WorkspaceScreen} />
     </Tab.Navigator>
   );
