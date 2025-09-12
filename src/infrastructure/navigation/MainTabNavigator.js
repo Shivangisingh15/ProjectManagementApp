@@ -4,12 +4,15 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {Text} from 'react-native';
 import DashboardScreen from '../../presentation/screens/dashboard/DashboardScreen';
 import KanbanScreen from '../../presentation/screens/kanban/KanbanScreen';
+// CORRECT - Use your existing TaskDetailScreen
+import TaskDetailScreen from '../../presentation/screens/kanban/TaskDetailsScreen';
 import ClockifyScreen from '../../presentation/screens/clockify/ClockifyScreen';
-import AddTaskScreen from '../../presentation/screens/clockify/AddTaskScreen';
+import AddTaskScreen from '../../presentation/screens/kanban/AddTaskScreen';
 import WorkspaceScreen from '../../presentation/screens/workspace/WorkspaceScreen';
 
 const Tab = createBottomTabNavigator();
 const ClockifyStack = createStackNavigator();
+const KanbanStack = createStackNavigator();
 
 // Create a stack navigator for Clockify to include AddTaskScreen
 const ClockifyStackNavigator = () => {
@@ -18,6 +21,25 @@ const ClockifyStackNavigator = () => {
       <ClockifyStack.Screen name="ClockifyMain" component={ClockifyScreen} />
       <ClockifyStack.Screen name="AddTaskScreen" component={AddTaskScreen} />
     </ClockifyStack.Navigator>
+  );
+};
+
+// Create a stack navigator for Kanban to include TaskDetailScreen
+const KanbanStackNavigator = () => {
+  return (
+    <KanbanStack.Navigator screenOptions={{headerShown: false}}>
+      <KanbanStack.Screen name="KanbanMain" component={KanbanScreen} />
+      <KanbanStack.Screen 
+        name="TaskDetailScreen" 
+        component={TaskDetailScreen}
+        options={{
+          presentation: 'transparentModal',
+          cardStyle: { backgroundColor: 'transparent' },
+          cardOverlayEnabled: true,
+        }}
+      />
+      <KanbanStack.Screen name="AddTaskScreen" component={AddTaskScreen} />
+    </KanbanStack.Navigator>
   );
 };
 
@@ -60,7 +82,7 @@ const MainTabNavigator = () => {
         },
       })}>
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Kanban" component={KanbanScreen} />
+      <Tab.Screen name="Kanban" component={KanbanStackNavigator} />
       <Tab.Screen name="Clockify" component={ClockifyStackNavigator} />
       <Tab.Screen name="Workspace" component={WorkspaceScreen} />
     </Tab.Navigator>
