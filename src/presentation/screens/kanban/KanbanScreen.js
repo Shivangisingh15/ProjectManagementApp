@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,11 @@ import {
   Dimensions,
   Alert,
   TextInput,
-  Animated,
-  PanResponder,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Card from '../../components/common/Card';
 
-const {width, height} = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const KanbanScreen = ({navigation}) => {
   const [selectedProject, setSelectedProject] = useState(null);
@@ -23,11 +21,30 @@ const KanbanScreen = ({navigation}) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Enhanced drag & drop state
-  const dragPosition = useRef(new Animated.ValueXY()).current;
-  const dragScale = useRef(new Animated.Value(1)).current;
+  // Simplified drag state - remove complex PanResponder
   const [isDragging, setIsDragging] = useState(false);
   const [dragOverColumn, setDragOverColumn] = useState(null);
+
+  // Simple long press to start drag
+  const startDrag = (task, columnId) => {
+    setDraggedTask({task, columnId});
+    setIsDragging(true);
+  };
+
+  // Cancel drag
+  const cancelDrag = () => {
+    setDraggedTask(null);
+    setIsDragging(false);
+    setDragOverColumn(null);
+  };
+
+  // Simple drop handler
+  const handleDrop = (targetColumnId) => {
+    if (draggedTask && targetColumnId !== draggedTask.columnId) {
+      moveTask(draggedTask.task.id, draggedTask.columnId, targetColumnId);
+    }
+    cancelDrag();
+  };
 
   // Mock projects data
   const projects = [
@@ -78,7 +95,7 @@ const KanbanScreen = ({navigation}) => {
     },
   ];
 
-  // Enhanced kanban columns with restrictions
+  // Simplified kanban columns - removed testing and review
   const [kanbanColumns, setKanbanColumns] = useState([
     {
       id: 'todo',
@@ -166,14 +183,6 @@ const KanbanScreen = ({navigation}) => {
           attachments: 1,
           estimatedHours: 5,
         },
-      ],
-    },
-    {
-      id: 'review',
-      title: 'Review',
-      color: '#F3E5F5',
-      allowedPriorities: ['high', 'medium', 'low'], // Cool priority not allowed in review
-      tasks: [
         {
           id: 7,
           title: 'Code Review for Login Module',
@@ -185,26 +194,6 @@ const KanbanScreen = ({navigation}) => {
           comments: 2,
           attachments: 1,
           estimatedHours: 3,
-        },
-      ],
-    },
-    {
-      id: 'testing',
-      title: 'Testing',
-      color: '#E8F5E8',
-      allowedPriorities: ['high', 'medium', 'low'], // Cool priority not allowed in testing
-      tasks: [
-        {
-          id: 8,
-          title: 'QA Testing Dashboard',
-          description: 'Comprehensive testing of dashboard functionality',
-          assignee: {name: 'Tom Davis', avatar: 'TD'},
-          priority: 'medium',
-          tags: ['QA', 'Testing'],
-          dueDate: '2024-02-20',
-          comments: 1,
-          attachments: 0,
-          estimatedHours: 8,
         },
       ],
     },
@@ -225,6 +214,18 @@ const KanbanScreen = ({navigation}) => {
           comments: 4,
           attachments: 2,
           estimatedHours: 12,
+        },
+        {
+          id: 8,
+          title: 'QA Testing Dashboard',
+          description: 'Comprehensive testing of dashboard functionality',
+          assignee: {name: 'Tom Davis', avatar: 'TD'},
+          priority: 'medium',
+          tags: ['QA', 'Testing'],
+          dueDate: '2024-02-20',
+          comments: 1,
+          attachments: 0,
+          estimatedHours: 8,
         },
       ],
     },
@@ -266,71 +267,6 @@ const KanbanScreen = ({navigation}) => {
       status: 'todo',
     },
   ];
-
-  // Enhanced pan responder for smooth drag & drop
-  const createPanResponder = (task, columnId) => {
-    return PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: () => {
-        setIsDragging(true);
-        setDraggedTask({task, columnId});
-        
-        // Animate scale up
-        Animated.spring(dragScale, {
-          toValue: 1.1,
-          useNativeDriver: true,
-        }).start();
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        dragPosition.setValue({
-          x: gestureState.dx,
-          y: gestureState.dy,
-        });
-        
-        // Check which column we're over
-        const touchX = evt.nativeEvent.pageX;
-        const columnWidth = width * 0.8;
-        const columnIndex = Math.floor((touchX - 16) / (columnWidth + 16));
-        
-        if (columnIndex >= 0 && columnIndex < kanbanColumns.length) {
-          const targetColumn = kanbanColumns[columnIndex];
-          setDragOverColumn(targetColumn.id);
-        } else {
-          setDragOverColumn(null);
-        }
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        const touchX = evt.nativeEvent.pageX;
-        const columnWidth = width * 0.8;
-        const columnIndex = Math.floor((touchX - 16) / (columnWidth + 16));
-        
-        if (columnIndex >= 0 && columnIndex < kanbanColumns.length) {
-          const targetColumn = kanbanColumns[columnIndex];
-          if (targetColumn.id !== columnId) {
-            moveTask(task.id, columnId, targetColumn.id);
-          }
-        }
-        
-        // Reset animations
-        Animated.parallel([
-          Animated.spring(dragPosition, {
-            toValue: {x: 0, y: 0},
-            useNativeDriver: true,
-          }),
-          Animated.spring(dragScale, {
-            toValue: 1,
-            useNativeDriver: true,
-          }),
-        ]).start();
-        
-        setIsDragging(false);
-        setDraggedTask(null);
-        setDragOverColumn(null);
-      },
-    });
-  };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -515,31 +451,23 @@ const KanbanScreen = ({navigation}) => {
     </Card>
   );
 
-  // Enhanced kanban task with improved drag handling
+  // Simplified kanban task with optimized drag handling
   const renderKanbanTask = (task, columnId) => {
-    const panResponder = createPanResponder(task, columnId);
     const isBeingDragged = draggedTask?.task.id === task.id;
     
     return (
-      <Animated.View
+      <View
         key={task.id}
         style={[
           styles.kanbanTaskCard,
-          isBeingDragged && {
-            transform: [
-              {translateX: dragPosition.x},
-              {translateY: dragPosition.y},
-              {scale: dragScale}
-            ],
-            zIndex: 1000,
-            elevation: 10,
-          }
-        ]}
-        {...panResponder.panHandlers}>
+          isBeingDragged && styles.draggedTask
+        ]}>
         
         <TouchableOpacity
           style={styles.taskContent}
           onPress={() => handleTaskPress(task)}
+          onLongPress={() => startDrag(task, columnId)}
+          delayLongPress={300}
           activeOpacity={0.8}>
           
           <View style={styles.taskHeader}>
@@ -581,15 +509,16 @@ const KanbanScreen = ({navigation}) => {
             </View>
           </View>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
   };
 
-  // Enhanced kanban column with filtering and drag indicators
+  // Simplified kanban column with simple drop zones
   const renderKanbanColumn = (column) => {
     const filteredTasks = getFilteredTasks(column.tasks);
     const totalHours = getTotalEstimatedHours(filteredTasks);
     const isDragTarget = dragOverColumn === column.id;
+    const canAcceptDrop = draggedTask ? canMoveTask(draggedTask.task, draggedTask.columnId, column.id) : true;
     
     return (
       <View key={column.id} style={[
@@ -607,6 +536,24 @@ const KanbanScreen = ({navigation}) => {
           <Text style={styles.columnHours}>⏱️ {totalHours}h</Text>
         </View>
         
+        {/* Simple Drop Zone at top */}
+        {isDragging && draggedTask?.columnId !== column.id && (
+          <TouchableOpacity
+            style={[
+              styles.dropZoneTop,
+              canAcceptDrop ? styles.validDropZone : styles.invalidDropZone
+            ]}
+            onPress={() => canAcceptDrop && handleDrop(column.id)}
+            activeOpacity={0.8}>
+            <Text style={styles.dropZoneText}>
+              {canAcceptDrop ? '⬇️ Drop Here' : '❌ Cannot Drop'}
+            </Text>
+            {!canAcceptDrop && draggedTask.task.priority === 'cool' && column.id === 'done' && (
+              <Text style={styles.dropZoneSubtext}>Cool tasks can't be done! 😎</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        
         <ScrollView style={styles.columnContent} showsVerticalScrollIndicator={false}>
           {filteredTasks.map(task => renderKanbanTask(task, column.id))}
           
@@ -616,20 +563,19 @@ const KanbanScreen = ({navigation}) => {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Enhanced drop indicator */}
+        {/* Simple Drop Zone at bottom */}
         {isDragging && draggedTask?.columnId !== column.id && (
-          <View style={[
-            styles.dropIndicator,
-            canMoveTask(draggedTask.task, draggedTask.columnId, column.id) 
-              ? styles.validDropIndicator 
-              : styles.invalidDropIndicator
-          ]}>
-            <Text style={styles.dropIndicatorText}>
-              {canMoveTask(draggedTask.task, draggedTask.columnId, column.id) 
-                ? '✅ Drop here' 
-                : '❌ Cannot drop'}
+          <TouchableOpacity
+            style={[
+              styles.dropZoneBottom,
+              canAcceptDrop ? styles.validDropZone : styles.invalidDropZone
+            ]}
+            onPress={() => canAcceptDrop && handleDrop(column.id)}
+            activeOpacity={0.8}>
+            <Text style={styles.dropZoneText}>
+              {canAcceptDrop ? '⬆️ Drop Here' : '❌ Cannot Drop'}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -704,12 +650,15 @@ const KanbanScreen = ({navigation}) => {
           {kanbanColumns.map(renderKanbanColumn)}
         </ScrollView>
 
-        {/* Drag status indicator */}
+        {/* Simple drag status indicator with cancel option */}
         {isDragging && (
-          <View style={styles.dragStatus}>
+          <View style={styles.dragStatusBar}>
             <Text style={styles.dragStatusText}>
-              Dragging: {draggedTask?.task.title}
+              Moving: "{draggedTask?.task.title}"
             </Text>
+            <TouchableOpacity onPress={cancelDrag} style={styles.cancelDragButton}>
+              <Text style={styles.cancelDragText}>✕ Cancel</Text>
+            </TouchableOpacity>
           </View>
         )}
       </SafeAreaView>
@@ -1109,6 +1058,15 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  draggedTask: {
+    opacity: 0.8,
+    transform: [{scale: 1.05}],
+    backgroundColor: '#E3F2FD',
+    borderWidth: 2,
+    borderColor: '#2196F3',
+    shadowOpacity: 0.3,
+    elevation: 5,
+  },
   taskContent: {
     padding: 12,
   },
@@ -1235,43 +1193,82 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9E9E9E',
   },
-  dropIndicator: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
-    height: 40,
+  // Optimized Drop Zone Styles
+  dropZoneTop: {
+    marginHorizontal: 8,
+    marginBottom: 12,
+    padding: 16,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
   },
-  validDropIndicator: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+  dropZoneBottom: {
+    marginHorizontal: 8,
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  validDropZone: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
     borderColor: '#4CAF50',
   },
-  invalidDropIndicator: {
-    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+  invalidDropZone: {
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
     borderColor: '#F44336',
   },
-  dropIndicatorText: {
+  dropZoneText: {
+    fontSize: 14,
     fontWeight: 'bold',
-    fontSize: 12,
+    textAlign: 'center',
   },
-  dragStatus: {
+  dropZoneSubtext: {
+    fontSize: 10,
+    color: '#757575',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  // Simplified Drag Status
+  dragStatusBar: {
     position: 'absolute',
-    top: 100,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+    top: 80,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(33, 150, 243, 0.95)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   dragStatusText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1,
+    marginRight: 12,
+  },
+  cancelDragButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  cancelDragText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });
